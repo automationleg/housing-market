@@ -1,0 +1,1 @@
+scrapy crawl oferty -o oferty.csv -t csv
