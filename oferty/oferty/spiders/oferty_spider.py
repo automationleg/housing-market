@@ -1,4 +1,5 @@
 import scrapy
+
 import re
 from .dzielnice import dzielnice_dict
 from oferty.items import FlatItem
@@ -69,7 +70,7 @@ class FlatsSpider(scrapy.Spider):
             Item['powierzchnia_uzytkowa'] = re.findall(r'(\d+\s?\d+,?\d*)', extract_with_xpath('//dl/dt[contains(text(), "Powierzchnia użytkowa")]/following-sibling::dd[1]/text()'))[0].replace(',', '.').replace(" ", "")
         except:
             pass
-        
+
         Item['liczba_pokoi'] = extract_with_xpath('//dl/dt[contains(text(), "Liczba pokoi")]/following-sibling::dd[1]/text()')
         Item['pietro'] = extract_with_xpath('//dl/dt[contains(text(), "Piętro")]/following-sibling::dd[1]/text()')
         Item['liczba_pieter'] = extract_with_xpath('//dl/dt[contains(text(), "Liczba pięter")]/following-sibling::dd[1]/text()')
@@ -77,3 +78,9 @@ class FlatsSpider(scrapy.Spider):
         Item['rynek_pierwotny'] = extract_with_xpath('//dl/dt[contains(text(), "Rynek pierwotny")]/following-sibling::dd[1]/text()')
     
         yield Item
+
+
+# if __name__ == "__main__":
+#     process = Crawl()
+#     process.crawl(FlatsSpider)
+#     process.start()
