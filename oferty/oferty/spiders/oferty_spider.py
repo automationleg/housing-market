@@ -30,9 +30,9 @@ class FlatsSpider(scrapy.Spider):
         
         yield {
             'miasto': extract_with_css('string(//h1)','adres'), 
-            'cena': extract_with_css('//h3/text()'))[1], 
-            'cena za m2': extract_with_css('//dl/dt[contains(text(), "Cena za m")]/following-sibling::dd[1]/text()'))[0],
-            'powierzchnia uzytkowa': extract_with_css('//dl/dt[contains(text(), "Powierzchnia użytkowa")]/following-sibling::dd[1]/text()'))[0],
+            'cena': extract_with_css('//h3/text()')[1], 
+            'cena za m2': extract_with_css('//dl/dt[contains(text(), "Cena za m")]/following-sibling::dd[1]/text()')[0],
+            'powierzchnia uzytkowa': extract_with_css('//dl/dt[contains(text(), "Powierzchnia użytkowa")]/following-sibling::dd[1]/text()')[0],
             'liczba pokoi': extract_with_css('//dl/dt[contains(text(), "Liczba pokoi")]/following-sibling::dd[1]/text()'),
             'pietro': extract_with_css('//dl/dt[contains(text(), "Piętro")]/following-sibling::dd[1]/text()'),
             'liczba pieter': extract_with_css('//dl/dt[contains(text(), "Liczba pięter")]/following-sibling::dd[1]/text()'),
