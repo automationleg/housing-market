@@ -1,6 +1,7 @@
 import scrapy
 import re
 from .dzielnice import dzielnice_dict
+from oferty.items import FlatItem
 
 class WarsawDistricts(scrapy.Spider):
     name = 'districts'
@@ -12,6 +13,8 @@ class WarsawDistricts(scrapy.Spider):
 
 class FlatsSpider(scrapy.Spider):
     name = 'oferty'
+
+    cities = ['Warszawa', 'Krakow', 'Gdansk']
 
     start_urls = ['https://www.oferty.net/mieszkania/szukaj?ps%5Blocation%5D%5Btype%5D=1&ps%5Btype%5D=1&ps%5Btransaction%5D=1&ps%5Blocation%5D%5Btext%5D=Warszawa']
 
@@ -25,17 +28,52 @@ class FlatsSpider(scrapy.Spider):
             yield response.follow(href, self.parse)
 
     def parse_flats(self, response):
-        def extract_with_css(query):
+        Item = FlatItem()
+
+        def extract_with_xpath(query):
             return response.xpath(query).get(default='').strip()
         
-        yield {
-            'miasto': extract_with_css('string(//h1)','adres'), 
-            'cena': extract_with_css('//h3/text()')[1], 
-            'cena za m2': extract_with_css('//dl/dt[contains(text(), "Cena za m")]/following-sibling::dd[1]/text()')[0],
-            'powierzchnia uzytkowa': extract_with_css('//dl/dt[contains(text(), "Powierzchnia użytkowa")]/following-sibling::dd[1]/text()')[0],
-            'liczba pokoi': extract_with_css('//dl/dt[contains(text(), "Liczba pokoi")]/following-sibling::dd[1]/text()'),
-            'pietro': extract_with_css('//dl/dt[contains(text(), "Piętro")]/following-sibling::dd[1]/text()'),
-            'liczba pieter': extract_with_css('//dl/dt[contains(text(), "Liczba pięter")]/following-sibling::dd[1]/text()'),
-            'rok budowy': extract_with_css('//dl/dt[contains(text(), "Rok budowy")]/following-sibling::dd[1]/text()'),
-            'rynek pierwotny': extract_with_css('//dl/dt[contains(text(), "Rynek pierwotny")]/following-sibling::dd[1]/text()'),
-        }
+        
+        def extract_address_data(address_string: str):
+            address_parts = [item.strip() for item in address_string.split(',')]
+
+            # find district
+            district = [item for item in address_parts 
+                        if (item in dzielnice_dict) or (item.replace(' ', '-') in dzielnice_dict)
+                        ]
+            if district:
+                district = district[0]
+                address_parts.remove(district)
+
+            # find subdistrict
+            subdistrict = [item for item in address_parts 
+                           if item in dzielnice_dict[district]] if district else ''
+                           
+            if subdistrict:
+                subdistrict = subdistrict[0]
+                address_parts.remove(subdistrict)
+
+            # find city
+            city = [item for item in address_parts if item in self.cities][0]
+
+            # find street name
+            street = address_parts[-1]
+            return city, district, subdistrict, street
+
+        address_string = ''.join(response.xpath('//h1/text()').getall())
+        Item['miasto'], Item['dzielnica'], Item['poddzielnica'], Item['ulica'] = extract_address_data(address_string)
+        
+        try:
+            Item['cena'] = re.findall(r'(\d+\s?\d+)', extract_with_xpath('//h3/text()'))[1].replace(',', '.').replace(" ", "")
+            Item['cena_za_m2'] = re.findall(r'(\d+\s?\d+,?\d*)', extract_with_xpath('//dl/dt[contains(text(), "Cena za m")]/following-sibling::dd[1]/text()'))[0].replace(',', '.').replace(" ", "")
+            Item['powierzchnia_uzytkowa'] = re.findall(r'(\d+\s?\d+,?\d*)', extract_with_xpath('//dl/dt[contains(text(), "Powierzchnia użytkowa")]/following-sibling::dd[1]/text()'))[0].replace(',', '.').replace(" ", "")
+        except:
+            pass
+        
+        Item['liczba_pokoi'] = extract_with_xpath('//dl/dt[contains(text(), "Liczba pokoi")]/following-sibling::dd[1]/text()')
+        Item['pietro'] = extract_with_xpath('//dl/dt[contains(text(), "Piętro")]/following-sibling::dd[1]/text()')
+        Item['liczba_pieter'] = extract_with_xpath('//dl/dt[contains(text(), "Liczba pięter")]/following-sibling::dd[1]/text()')
+        Item['rok_budowy'] = extract_with_xpath('//dl/dt[contains(text(), "Rok budowy")]/following-sibling::dd[1]/text()')
+        Item['rynek_pierwotny'] = extract_with_xpath('//dl/dt[contains(text(), "Rynek pierwotny")]/following-sibling::dd[1]/text()')
+    
+        yield Item
