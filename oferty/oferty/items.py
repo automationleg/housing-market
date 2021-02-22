@@ -34,6 +34,7 @@ class FlatItem(OrderedItem):
     liczba_pieter = scrapy.Field()
     rok_budowy = scrapy.Field()
     rynek_pierwotny = scrapy.Field()
+    url = scrapy.Field()
 
     # def __repr__(self):
     #     return f"miasto: {self['miasto']}, dzielnica: {self['dzielnica']}, poddzielnica: {self['poddzielnica']}, ulica: {self['ulica']}"

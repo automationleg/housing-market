@@ -65,18 +65,33 @@ class FlatsSpider(scrapy.Spider):
         Item['miasto'], Item['dzielnica'], Item['poddzielnica'], Item['ulica'] = extract_address_data(address_string)
         
         try:
-            Item['cena'] = re.findall(r'(\d+\s?\d+)', extract_with_xpath('//h3/text()'))[1].replace(',', '.').replace(" ", "")
-            Item['cena_za_m2'] = re.findall(r'(\d+\s?\d+,?\d*)', extract_with_xpath('//dl/dt[contains(text(), "Cena za m")]/following-sibling::dd[1]/text()'))[0].replace(',', '.').replace(" ", "")
-            Item['powierzchnia_uzytkowa'] = re.findall(r'(\d+\s?\d+,?\d*)', extract_with_xpath('//dl/dt[contains(text(), "Powierzchnia użytkowa")]/following-sibling::dd[1]/text()'))[0].replace(',', '.').replace(" ", "")
+            cena = extract_with_xpath('//h3/text()')
+            cena = re.search(r'\bCena: (.*)\sPLN\b', cena).group(1).replace(' ','')
         except:
             pass
 
+        try:
+            cena_za_m2 = extract_with_xpath('//dl/dt[contains(text(), "Cena za m")]/following-sibling::dd[1]/text()')
+            cena_za_m2 = re.findall(r'(\d+\s?\d+,?\d*)', cena_za_m2)[0].replace(',', '.').replace(" ", "")
+        except:
+            pass
+
+        try:
+            powierzchnia = extract_with_xpath('//dl/dt[contains(text(), "Powierzchnia użytkowa")]/following-sibling::dd[1]/text()')
+            powierzchnia = re.findall(r'(\d+\s?\d+,?\d*)', powierzchnia)[0].replace(',', '.').replace(" ", "")
+        except:
+            pass
+
+        Item['cena'] = cena
+        Item['cena_za_m2'] = cena_za_m2
+        Item['powierzchnia_uzytkowa'] = powierzchnia
         Item['liczba_pokoi'] = extract_with_xpath('//dl/dt[contains(text(), "Liczba pokoi")]/following-sibling::dd[1]/text()')
         Item['pietro'] = extract_with_xpath('//dl/dt[contains(text(), "Piętro")]/following-sibling::dd[1]/text()')
         Item['liczba_pieter'] = extract_with_xpath('//dl/dt[contains(text(), "Liczba pięter")]/following-sibling::dd[1]/text()')
         Item['rok_budowy'] = extract_with_xpath('//dl/dt[contains(text(), "Rok budowy")]/following-sibling::dd[1]/text()')
         Item['rynek_pierwotny'] = extract_with_xpath('//dl/dt[contains(text(), "Rynek pierwotny")]/following-sibling::dd[1]/text()')
-    
+        Item['url'] = response.request.url
+
         yield Item
 
 
