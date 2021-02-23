@@ -39,12 +39,11 @@ class FlatsSpider(scrapy.Spider):
             address_parts = [item.strip() for item in address_string.split(',')]
 
             # find district
-            district = [item for item in address_parts 
-                        if (item in dzielnice_dict) or (item.replace(' ', '-') in dzielnice_dict)
+            district = [item.replace('-', ' ') for item in address_parts 
+                        if item.replace('-', ' ') in dzielnice_dict
                         ]
             if district:
                 district = district[0]
-                address_parts.remove(district)
 
             # find subdistrict
             subdistrict = [item for item in address_parts 
